@@ -8,8 +8,9 @@ for arg in sys.argv:
 dir_socket="/tmp/db.tuples.sock"
 if lista_arg[0] == "-s":
     dir_socket = lista_arg[1]
-    
-HOST =socket.gethostname()   # The server's hostname or IP address
+
+hostname=socket.gethostname()
+HOST =socket.gethostbyname(hostname)   # The server's hostname or IP address
 PORT = 55001      # The port used by the server
 
 # Create a TCP/IP socket
@@ -23,7 +24,7 @@ while cmd!= "quit":
     if(cmd == "connect"):
 			#Se conecta el socket
         server_address = (HOST, PORT)
-        print ('connecting to {} port {}'.format(sys.stderr, server_address))
+        print ('Conectandose a {} puerto {}'.format(HOST,PORT))
         sock.connect(server_address)
         conectado = True;
         print("Conectado con exito al servidor")
