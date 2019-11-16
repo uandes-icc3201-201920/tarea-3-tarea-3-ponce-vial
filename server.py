@@ -14,9 +14,9 @@ hostname= socket.gethostname()
 HOST =socket.gethostbyname(hostname)
 PORT = 55001  
 
-def funcion_thread(connection):
+def funcion_thread(connection,client_address):
+    print ("Cliente {} se ha conectado".format(client_address[0]))
     while True:
-        print ("Cliente se ha conectado")
         mensaje = connection.recv(4096).decode()
         
         if not mensaje:
@@ -187,5 +187,5 @@ sock.listen(5)
 while True:
     #ESperar conexiones hasta el infinito
     connection, client_address = sock.accept()
-    _thread.start_new_thread(funcion_thread,(connection,))
+    _thread.start_new_thread(funcion_thread,(connection,client_address))
     
