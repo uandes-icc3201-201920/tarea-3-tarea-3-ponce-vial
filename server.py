@@ -18,83 +18,157 @@ def funcion_thread(connection):
     while True:
         print ("Cliente se ha conectado")
         mensaje = connection.recv(4096).decode()
-        print (mensaje)
         
         if not mensaje:
             break
         
         else:
-            lista_elementos=mensaje.split("/")
+            elementos_protocolo=mensaje.split("\n")
+            llave=0
+            valor=""
+            
             mensaje_salida=""
             COMMAND=""
             ADD=""
             KEY=""
             VALUE=""
-            key=0
-            value=""
             RESPUESTA = ""
             ERROR=""
             
             
             #HEADER:
-            ID = lista_elementos[0]
-            IP = lista_elementos[1]
-            ROR = lista_elementos[2]
-            CODE = lista_elementos[3]
-            ESTADO = lista_elementos[4]
-            FORMATO = lista_elementos[5]
-            SUBFORMATO = lista_elementos[6]
+            header= elementos_protocolo[0].split("/")
+            ID = header[0]
+            IP = header[1]
+            ROR = int(header[2])
+            CODE = header[3]
+            ESTADO = header[4]
+            FORMATO = header[5]
+            SUBFORMATO = header[6]
             
             #Request
+            req_res= elementos_protocolo[1].split("/")
             if ROR == 0:
-                COMMAND=lista_elementos[7]
-                ADD=int(lista_elementos[8])
-                KEY=int(lista_elementos[9])
-                VALUE=int(lista_elementos[10])
+                COMMAND=req_res[0]
+                ADD=int(req_res[1])
+                KEY=int(req_res[2])
+                VALUE=int(req_res[3])
                 
                 #informacion adicional
+                info_adi=elementos_protocolo[2].split("/")
                 if KEY==1:
-                    key=int(lista_elementos[11])
+                    try:
+                        llave=int(info_adi[0])
+                    except:
+                        ERROR = "Error: La Key debe ser un valor numerico"
+                                        #ID/IP/ROR/CODE/ESTADO/FORMATO/SUBFORMATO\n RESPONCE\n INFO_ADI
+                        mensaje_salida = "{}/{}/1/{}/100/text/plain\n \n{}".format(ID,HOST,random.randint(1000,5000),ERROR)
+                        connection.sendall(mensaje_salida.encode())
+                        continue
+                        
                 
                     if VALUE==1:
-                        value=lista_elementos[12]
+                        valor=info_adi[1]
                 
                 elif KEY==0:
                     if VALUE==1:
-                        value=lista_elementos[11]
+                        valor=info_adi[0]
                     
-            #############
+            ##################################
             #Comandos:
-            if COMMAND=="DISCONNECT":
+            if COMMAND=="disconnect":
                 break
             
-            elif COMMAND == "INSERT":
-                if VALUE==1: #insert(key,value)
+            elif COMMAND == "insert":
+                if KEY==1: #insert(key,value)
                     #Revisamos primero si la key ya existe
-                    if key in db:
-                        ERROR = "/La Key ya se encuentra en la BD"
-                        mensaje_salida = "{}/{}/1/{}/150/text/plain/ /{}/".format(ID,HOST,random.randint(1000,5000),ERROR)
-                        connection.sendall(mensaje_salida)
+                    if llave in db:
+                        ERROR = "Error: La Key ya se encuentra en la BD"
+                                        #ID/IP/ROR/CODE/ESTADO/FORMATO/SUBFORMATO\n RESPONCE\n INFO_ADI
+                        mensaje_salida = "{}/{}/1/{}/150/text/plain\n \n{}".format(ID,HOST,random.randint(1000,5000),ERROR)
+                        connection.sendall(mensaje_salida.encode())
                     
                     else:
-                        db[key]=value
-                        RESPUESTA = "/Se insertó correctamente"
-                        mensaje_salida = "{}/{}/1/{}/500/text/plain/{}/".format(ID,HOST,random.randint(1000,5000),RESPUESTA)
-                        connection.sendall(mensaje_salida)
+                        db[llave]=valor
+                        RESPUESTA = "Se insertó correctamente"
+                                         #ID/IP/ROR/CODE/ESTADO/FORMATO/SUBFORMATO\n RESPONCE
+                        mensaje_salida = "{}/{}/1/{}/500/text/plain\n{}".format(ID,HOST,random.randint(1000,5000),RESPUESTA)
+                        connection.sendall(mensaje_salida.encode())
             
-                elif VALUE== 0:  #insert(value)
+                elif KEY== 0:  #insert(value)
                     #Revisamos primero si la clave autogerenada ya existe
                     global clave_autogenerada
                     while clave_autogenerada in db:
                         clave_autogenerada+=1
                     
-                    db[clave_autogenerada]=value
+                    db[clave_autogenerada]=valor
                     RESPUESTA= "La Key generada es {}".format(clave_autogenerada)
-                    print(RESPUESTA)
+                                     #ID/IP/ROR/CODE/ESTADO/FORMATO/SUBFORMATO\n RESPONCE
                     mensaje_salida = "{}/{}/1/{}/500/text/plain/{}/".format(ID,HOST,random.randint(1000,5000),RESPUESTA)
-                    connection.sendall(mensaje_salida)
-    
-    
+                    connection.sendall(mensaje_salida.encode())
+            
+            elif COMMAND == "get":   #get(key)
+                    if llave in db:
+                        RESPUESTA= "El valor de la key {} es {}".format(llave,db[llave])
+                                        #ID/IP/ROR/CODE/ESTADO/FORMATO/SUBFORMATO\n RESPONCE
+                        mensaje_salida = "{}/{}/1/{}/500/text/plain\n{}".format(ID,HOST,random.randint(1000,5000),RESPUESTA)
+                        connection.sendall(mensaje_salida.encode())
+                        
+                    else:
+                        ERROR = "Error: La Key no se encuentra en la BD"
+                                        #ID/IP/ROR/CODE/ESTADO/FORMATO/SUBFORMATO\n RESPONCE\n INFO_ADI
+                        mensaje_salida = "{}/{}/1/{}/200/text/plain\n \n{}".format(ID,HOST,random.randint(1000,5000),ERROR)
+                        connection.sendall(mensaje_salida.encode())
+                        
+                        
+            elif COMMAND == "peek":  #peek(key)
+                    if llave in db:
+                        RESPUESTA= "True"
+                    else:
+                        RESPUESTA= "False"
+                        
+                                    #ID/IP/ROR/CODE/ESTADO/FORMATO/SUBFORMATO\n RESPONCE
+                    mensaje_salida = "{}/{}/1/{}/500/text/plain\n{}".format(ID,HOST,random.randint(1000,5000),RESPUESTA)
+                    connection.sendall(mensaje_salida.encode())
+                    
+            elif COMMAND == "update":  #update(key,value)
+                    if llave in db:
+                        db[llave]=valor
+                        RESPUESTA= "El valor ha sido actualizado"
+                                        #ID/IP/ROR/CODE/ESTADO/FORMATO/SUBFORMATO\n RESPONCE
+                        mensaje_salida = "{}/{}/1/{}/500/text/plain\n{}".format(ID,HOST,random.randint(1000,5000),RESPUESTA)
+                        connection.sendall(mensaje_salida.encode())
+                        
+                    else:
+                        ERROR = "Error: La Key no se encuentra en la BD"
+                                        #ID/IP/ROR/CODE/ESTADO/FORMATO/SUBFORMATO\n RESPONCE\n INFO_ADI
+                        mensaje_salida = "{}/{}/1/{}/300/text/plain\n \n{}".format(ID,HOST,random.randint(1000,5000),ERROR)
+                        connection.sendall(mensaje_salida.encode())
+                        
+            elif COMMAND == "delete":  #delete(key)
+                    if llave in db:
+                        del db[llave]
+                        RESPUESTA= "La key ha sido eliminada con exito"
+                                        #ID/IP/ROR/CODE/ESTADO/FORMATO/SUBFORMATO\n RESPONCE
+                        mensaje_salida = "{}/{}/1/{}/500/text/plain\n{}".format(ID,HOST,random.randint(1000,5000),RESPUESTA)
+                        connection.sendall(mensaje_salida.encode())
+                        
+                    else:
+                        ERROR = "Error: La Key no se encuentra en la BD"
+                                        #ID/IP/ROR/CODE/ESTADO/FORMATO/SUBFORMATO\n RESPONCE\n INFO_ADI
+                        mensaje_salida = "{}/{}/1/{}/350/text/plain\n \n{}".format(ID,HOST,random.randint(1000,5000),ERROR)
+                        connection.sendall(mensaje_salida.encode())
+                        
+            elif COMMAND == "list":  #list
+                RESPUESTA +="["
+                for clave in db:
+                    RESPUESTA += " " + str(clave)+ " "
+                RESPUESTA +="]"
+                                #ID/IP/ROR/CODE/ESTADO/FORMATO/SUBFORMATO\n RESPONCE
+                mensaje_salida = "{}/{}/1/{}/500/text/plain\n{}".format(ID,HOST,random.randint(1000,5000),RESPUESTA)
+                connection.sendall(mensaje_salida.encode())
+
+
     connection.close()
     return
 
