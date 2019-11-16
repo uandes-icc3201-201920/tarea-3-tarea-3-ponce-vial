@@ -24,29 +24,31 @@ if lista_arg[0] == "-s":
     dir_socket = lista_arg[1]
 
 hostname=socket.gethostname()
-HOST = socket.gethostbyname(hostname)   # The server's hostname or IP address
-PORT = 55001      # The port used by the server
+HOST = socket.gethostbyname(hostname)
+PORT = 55001
 
-# Create a TCP/IP socket
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+sock = None
 
 conectado=False
 cmd=""
-while cmd!= "quit":
-    cmd=input()
+while True:
+    cmd=input(">>>")
     comand = cmd.replace("("," ").replace(")","").replace(","," ")
     #Deja el comando en una lista
     list_cmd = comand.split(" ")
     #Genera un codigo para el mensaje
     code = Code("dfhajfhajdf",6)
     if(list_cmd[0] == "connect"):
-			#Se conecta el socket
+        # Se crea el socket
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        
+        #Se conecta el socket
         server_address = (HOST, PORT)
         print ('Conectandose a {} puerto {}'.format(HOST,PORT))
         sock.connect(server_address)
         conectado = True;
         print("Conectado con exito al servidor")
-    if(conectado == False):
+    if(conectado == True):
         if(list_cmd[0] == "insert"):
             #insert(value)
             if(len(list_cmd) == 2):
@@ -84,5 +86,14 @@ while cmd!= "quit":
                 print("Formato del comando incorrecto!")
         elif(list_cmd[0] == "disconnect"):
             sock.close()
+            conectado=False
+            
+        elif list_cmd[0]=="quit":
+            sock.close()
+            break
+    
+    elif list_cmd[0]=="quit":
+            break
+    
     else:
         print("Conexion no establecida o comando incorrecto")
