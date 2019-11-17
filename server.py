@@ -14,6 +14,8 @@ hostname= socket.gethostname()
 HOST =socket.gethostbyname(hostname)
 PORT = 55001  
 
+lock= _thread.allocate_lock()
+
 def funcion_thread(connection,client_address):
     print ("Cliente {} se ha conectado".format(client_address[0]))
     while True:
@@ -81,6 +83,8 @@ def funcion_thread(connection,client_address):
             
             elif COMMAND == "insert":
                 if KEY==1: #insert(key,value)
+                    #Seccion critica empieza
+                    lock.acquire()
                     #Revisamos primero si la key ya existe
                     if llave in db:
                         ERROR = "Error: La Key ya se encuentra en la BD"
@@ -94,9 +98,13 @@ def funcion_thread(connection,client_address):
                                          #ID/IP/ROR/CODE/ESTADO/FORMATO/SUBFORMATO\n RESPONCE
                         mensaje_salida = "{}/{}/1/{}/500/text/plain\n{}".format(ID,HOST,random.randint(1000,5000),RESPUESTA)
                         connection.sendall(mensaje_salida.encode())
+                    #Seccion critia termina
+                    lock.release()
             
                 elif KEY== 0:  #insert(value)
                     #Revisamos primero si la clave autogerenada ya existe
+                    #Seccion critica empieza
+                    lock.acquire()
                     global clave_autogenerada
                     while clave_autogenerada in db:
                         clave_autogenerada+=1
@@ -106,8 +114,12 @@ def funcion_thread(connection,client_address):
                                      #ID/IP/ROR/CODE/ESTADO/FORMATO/SUBFORMATO\n RESPONCE
                     mensaje_salida = "{}/{}/1/{}/500/text/plain/{}/".format(ID,HOST,random.randint(1000,5000),RESPUESTA)
                     connection.sendall(mensaje_salida.encode())
+                    #Seccion critia termina
+                    lock.release()
             
             elif COMMAND == "get":   #get(key)
+                    #Seccion critica empieza
+                    lock.acquire()
                     if llave in db:
                         RESPUESTA= "El valor de la key {} es {}".format(llave,db[llave])
                                         #ID/IP/ROR/CODE/ESTADO/FORMATO/SUBFORMATO\n RESPONCE
@@ -119,9 +131,12 @@ def funcion_thread(connection,client_address):
                                         #ID/IP/ROR/CODE/ESTADO/FORMATO/SUBFORMATO\n RESPONCE\n INFO_ADI
                         mensaje_salida = "{}/{}/1/{}/200/text/plain\n \n{}".format(ID,HOST,random.randint(1000,5000),ERROR)
                         connection.sendall(mensaje_salida.encode())
-                        
+                    #Seccion critia termina
+                    lock.release()   
                         
             elif COMMAND == "peek":  #peek(key)
+                    #Seccion critica empieza
+                    lock.acquire()
                     if llave in db:
                         RESPUESTA= "True"
                     else:
@@ -130,8 +145,12 @@ def funcion_thread(connection,client_address):
                                     #ID/IP/ROR/CODE/ESTADO/FORMATO/SUBFORMATO\n RESPONCE
                     mensaje_salida = "{}/{}/1/{}/500/text/plain\n{}".format(ID,HOST,random.randint(1000,5000),RESPUESTA)
                     connection.sendall(mensaje_salida.encode())
+                    #Seccion critia termina
+                    lock.release() 
                     
             elif COMMAND == "update":  #update(key,value)
+                    #Seccion critica empieza
+                    lock.acquire()
                     if llave in db:
                         db[llave]=valor
                         RESPUESTA= "El valor ha sido actualizado"
@@ -144,8 +163,12 @@ def funcion_thread(connection,client_address):
                                         #ID/IP/ROR/CODE/ESTADO/FORMATO/SUBFORMATO\n RESPONCE\n INFO_ADI
                         mensaje_salida = "{}/{}/1/{}/300/text/plain\n \n{}".format(ID,HOST,random.randint(1000,5000),ERROR)
                         connection.sendall(mensaje_salida.encode())
-                        
+                    #Seccion critia termina
+                    lock.release() 
+                    
             elif COMMAND == "delete":  #delete(key)
+                    #Seccion critica empieza
+                    lock.acquire()
                     if llave in db:
                         del db[llave]
                         RESPUESTA= "La key ha sido eliminada con exito"
@@ -158,8 +181,12 @@ def funcion_thread(connection,client_address):
                                         #ID/IP/ROR/CODE/ESTADO/FORMATO/SUBFORMATO\n RESPONCE\n INFO_ADI
                         mensaje_salida = "{}/{}/1/{}/350/text/plain\n \n{}".format(ID,HOST,random.randint(1000,5000),ERROR)
                         connection.sendall(mensaje_salida.encode())
+                    #Seccion critia termina
+                    lock.release()
                         
             elif COMMAND == "list":  #list
+                #Seccion critica empieza
+                lock.acquire()
                 RESPUESTA +="["
                 for clave in db:
                     RESPUESTA += " " + str(clave)+ " "
@@ -167,7 +194,8 @@ def funcion_thread(connection,client_address):
                                 #ID/IP/ROR/CODE/ESTADO/FORMATO/SUBFORMATO\n RESPONCE
                 mensaje_salida = "{}/{}/1/{}/500/text/plain\n{}".format(ID,HOST,random.randint(1000,5000),RESPUESTA)
                 connection.sendall(mensaje_salida.encode())
-
+                #Seccion critia termina
+                lock.release()
 
     connection.close()
     return
