@@ -52,7 +52,8 @@ if lista_arg[0] == "-s":
     dir_socket = lista_arg[1]
 
 hostname=socket.gethostname()
-HOST = socket.gethostbyname(hostname)
+#HOST =(socket.gethostbyname_ex(hostname))[-1][-1]
+HOST = input("Ingrese IP: ")
 PORT = 55001
 
 sock = None
