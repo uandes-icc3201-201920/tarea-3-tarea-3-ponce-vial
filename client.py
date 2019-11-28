@@ -1,6 +1,13 @@
 import socket
 import sys
 import random
+
+#------------------------------------------IMPORTANTE---------------------------------------------------
+#El programa realiza conexiones entre servidor y cliente entre computadores si estos se encuentran
+#conectados a la misma red. En este caso, se debe ingresar como input la IP mostrada en el programa server.
+#En el caso de que la conexion sea local, se debe realizar el mismo procedimiento anterior
+#--------------------------------------------------------------------------------------------------------
+
 #Generador de palabras aleatorias para el codigo del mensaje
 def Code(palabra,largo):
         palabra = list(palabra)
@@ -52,8 +59,7 @@ if lista_arg[0] == "-s":
     dir_socket = lista_arg[1]
 
 hostname=socket.gethostname()
-#HOST =(socket.gethostbyname_ex(hostname))[-1][-1]
-HOST = input("Ingrese IP: ")
+HOST = input("Ingrese IP del Servidor: ")
 PORT = 55001
 
 sock = None
