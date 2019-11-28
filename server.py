@@ -1,7 +1,6 @@
 import socket
 import random
 import _thread
-import random
 #Generador de palabras aleatorias para el codigo del mensaje
 def Code(palabra,largo):
         palabra = list(palabra)
@@ -25,7 +24,7 @@ db = {1020: "hola",
       1070: "144"}
 
 hostname= socket.gethostname()
-HOST =socket.gethostbyname(hostname)
+HOST =(socket.gethostbyname_ex(hostname))[-1][-1]
 PORT = 55001  
 
 lock= _thread.allocate_lock()
